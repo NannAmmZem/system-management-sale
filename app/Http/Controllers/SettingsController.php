@@ -41,10 +41,7 @@ class SettingsController extends Controller
             Cache::put("setting_{$key}", $value, now()->addYears(1));
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Settings updated successfully!'
-        ]);
+        return back()->with('success', 'Settings updated successfully!');
     }
 
     public function clearCache()
@@ -54,15 +51,9 @@ class SettingsController extends Controller
             Artisan::call('config:clear');
             Artisan::call('view:clear');
             
-            return response()->json([
-                'success' => true,
-                'message' => 'Cache cleared successfully!'
-            ]);
+            return back()->with('success', 'Cache cleared successfully!');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to clear cache: ' . $e->getMessage()
-            ], 500);
+            return back()->with('error', 'Failed to clear cache: ' . $e->getMessage());
         }
     }
 
@@ -71,7 +62,7 @@ class SettingsController extends Controller
         try {
             $backupName = 'backup_' . date('Y_m_d_H_i_s') . '.sql';
             
-            // Simple database backup (you might want to use a proper backup package)
+            // Simple database backup
             $databasePath = database_path('database.sqlite');
             $backupPath = storage_path('app/backups/' . $backupName);
             
@@ -81,16 +72,9 @@ class SettingsController extends Controller
             
             copy($databasePath, $backupPath);
             
-            return response()->json([
-                'success' => true,
-                'message' => 'Backup created successfully!',
-                'backup_name' => $backupName
-            ]);
+            return back()->with('success', 'Backup created successfully!');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to create backup: ' . $e->getMessage()
-            ], 500);
+            return back()->with('error', 'Failed to create backup: ' . $e->getMessage());
         }
     }
 
@@ -166,5 +150,21 @@ class SettingsController extends Controller
     {
         // Simple uptime calculation
         return now()->diffForHumans(now()->subHours(rand(1, 72)));
+    }
+    
+    public function testTelegram()
+    {
+        try {
+            $telegramService = new \App\Services\TelegramNotificationService();
+            $result = $telegramService->sendTestNotification();
+            
+            if ($result['success']) {
+                return back()->with('success', 'Telegram test notification sent successfully!');
+            } else {
+                return back()->with('error', 'Failed to send Telegram notification: ' . $result['message']);
+            }
+        } catch (\Exception $e) {
+            return back()->with('error', 'Telegram error: ' . $e->getMessage());
+        }
     }
 }

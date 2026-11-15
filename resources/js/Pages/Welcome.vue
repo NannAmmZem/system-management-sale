@@ -223,7 +223,7 @@ const orderItem = (product) => {
 };
 
 const viewProductDetails = (productId) => {
-    window.location.href = `/products/${productId}`;
+    window.location.href = `/product/${productId}`;
 };
 
 // Clear filters
@@ -520,11 +520,11 @@ const promotions = [
                     <div
                         v-for="product in filteredProducts"
                         :key="product.id"
-                        class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
+                        class="product-card bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer group flex flex-col"
                         @click="viewProductDetails(product.id)"
                     >
                         <!-- Product Image -->
-                        <div class="relative h-48 sm:h-52 overflow-hidden">
+                        <div class="relative h-48 sm:h-52 overflow-hidden flex-shrink-0">
                             <img
                                 :src="product.image_url || '/images/no-image.svg'"
                                 :alt="product.name_en"
@@ -554,12 +554,15 @@ const promotions = [
                         </div>
 
                         <!-- Product Info -->
-                        <div class="p-4">
-                            <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-2 line-clamp-2">
+                        <div class="p-4 flex flex-col flex-grow">
+                            <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-2 line-clamp-2 min-h-[3.5rem]">
                                 {{ product.name_en }}
                             </h3>
-                            <p v-if="product.description" class="text-gray-600 text-sm mb-3 line-clamp-2">
+                            <p v-if="product.description" class="text-gray-600 text-sm mb-3 line-clamp-2 min-h-[2.5rem]">
                                 {{ product.description }}
+                            </p>
+                            <p v-else class="text-gray-400 text-sm mb-3 italic min-h-[2.5rem]">
+                                No description available
                             </p>
                             
                             <div class="flex items-center justify-between mb-4">
@@ -582,7 +585,7 @@ const promotions = [
                             </div>
 
                             <!-- Action Buttons -->
-                            <div class="flex space-x-2">
+                            <div class="flex space-x-2 mt-auto">
                                 <v-btn
                                     color="green-darken-3"
                                     variant="flat"
@@ -679,6 +682,37 @@ const promotions = [
 /* Hide ShopLayout navigation for Starbucks-style page */
 .starbucks-page :deep(.v-app-bar) {
   display: none !important;
+}
+
+/* Product Card Equal Heights */
+.product-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.product-card .p-4 {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+/* Ensure consistent title height */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Minimum heights for consistent card sizing */
+.min-h-\[3\.5rem\] {
+  min-height: 3.5rem;
+}
+
+.min-h-\[2\.5rem\] {
+  min-height: 2.5rem;
 }
 
 /* Starbucks-inspired styling */

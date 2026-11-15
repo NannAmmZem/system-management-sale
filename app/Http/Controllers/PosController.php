@@ -126,6 +126,14 @@ class PosController extends Controller
 
             DB::commit();
 
+            // Send Telegram notification
+            try {
+                $telegramService = new \App\Services\TelegramNotificationService();
+                $telegramService->notifyNewSale($sale);
+            } catch (\Exception $e) {
+                \Log::error('Failed to send Telegram notification: ' . $e->getMessage());
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Sale completed successfully!',

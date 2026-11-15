@@ -1,9 +1,10 @@
 <script setup>
-import { Link, router } from '@inertiajs/vue3';
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { Link, router, usePage } from '@inertiajs/vue3';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useProductStore } from '@/Stores/productStore';
 
 const store = useProductStore();
+const page = usePage();
 
 // --- State Management ---
 const isScrolled = ref(false);
@@ -11,6 +12,24 @@ const searchQuery = ref('');
 const mobileDrawer = ref(false);
 const cartCount = computed(() => store.cartItemCount);
 const favCount = computed(() => store.favoriteCount);
+
+// --- Flash Message Snackbar ---
+const snackbar = ref(false);
+const snackbarMessage = ref('');
+const snackbarColor = ref('success');
+
+// Watch for flash messages
+watch(() => page.props.flash, (flash) => {
+    if (flash?.success) {
+        snackbarMessage.value = flash.success;
+        snackbarColor.value = 'success';
+        snackbar.value = true;
+    } else if (flash?.error) {
+        snackbarMessage.value = flash.error;
+        snackbarColor.value = 'error';
+        snackbar.value = true;
+    }
+}, { deep: true });
 
 // --- Search Functionality ---
 const handleSearch = () => {
@@ -49,6 +68,13 @@ const logout = () => {
     mobileDrawer.value = false; // Close drawer
     router.post(route('logout'));
 };
+
+// --- Check if user has admin or staff role ---
+const hasAdminAccess = computed(() => {
+    const user = page.props.auth?.user;
+    if (!user || !user.roles) return false;
+    return user.roles.includes('admin') || user.roles.includes('staff');
+});
 </script>
 
 <template>
@@ -123,7 +149,7 @@ const logout = () => {
                 
                 <div v-if="$page.props.auth.user">
                     <v-list-item 
-                        v-if="$page.props.auth.user.roles && $page.props.auth.user.roles.length > 0" 
+                        v-if="hasAdminAccess" 
                         prepend-icon="mdi-view-dashboard"
                         @click="navigateTo('dashboard')"
                     >
@@ -240,7 +266,7 @@ const logout = () => {
 
                 <div v-if="$page.props.auth.user">
                     <Link 
-                        v-if="$page.props.auth.user.roles && $page.props.auth.user.roles.length > 0" 
+                        v-if="hasAdminAccess" 
                         :href="route('dashboard')"
                     >
                         <v-btn variant="outlined" color="amber-accent-2" class="font-weight-bold">
@@ -292,6 +318,31 @@ const logout = () => {
         <v-main class="bg-grey-darken-4">
             <slot />
         </v-main>
+
+        <!-- Flash Message Snackbar -->
+        <v-snackbar
+            v-model="snackbar"
+            :color="snackbarColor"
+            :timeout="5000"
+            location="top"
+            rounded="pill"
+        >
+            <div class="d-flex align-center">
+                <v-icon 
+                    :icon="snackbarColor === 'success' ? 'mdi-check-circle' : 'mdi-alert-circle'" 
+                    class="mr-2"
+                ></v-icon>
+                {{ snackbarMessage }}
+            </div>
+            <template v-slot:actions>
+                <v-btn
+                    variant="text"
+                    @click="snackbar = false"
+                    icon="mdi-close"
+                    size="small"
+                ></v-btn>
+            </template>
+        </v-snackbar>
 
         <!-- Modern Starbucks-Style Footer -->
         <footer id="contact-footer" class="bg-gradient-to-b from-gray-900 to-black text-white">

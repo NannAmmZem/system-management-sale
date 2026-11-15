@@ -611,16 +611,36 @@ const processPayment = async () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        'Accept': 'application/json'
       },
       body: JSON.stringify(requestData)
     });
 
     console.log('Response status:', response.status);
     
+    // Check for CSRF token error (419)
+    if (response.status === 419) {
+      showNotificationMessage('Session expired. Refreshing page...', 'warning', 'mdi-refresh');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+      return;
+    }
+    
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Response error:', errorText);
+      
+      // Check if error text contains 419 or "Page Expired"
+      if (errorText.includes('419') || errorText.includes('Page Expired')) {
+        showNotificationMessage('Session expired. Refreshing page...', 'warning', 'mdi-refresh');
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+        return;
+      }
+      
       throw new Error(`HTTP ${response.status}: ${errorText}`);
     }
 
@@ -647,6 +667,16 @@ const processPayment = async () => {
     }
   } catch (error) {
     console.error('Payment error:', error);
+    
+    // Check if it's a CSRF error
+    if (error.message && (error.message.includes('419') || error.message.includes('Page Expired'))) {
+      showNotificationMessage('Session expired. Refreshing page...', 'warning', 'mdi-refresh');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+      return;
+    }
+    
     showNotificationMessage('Payment processing failed: ' + error.message, 'error', 'mdi-alert');
   } finally {
     processing.value = false;

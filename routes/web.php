@@ -55,9 +55,19 @@ require __DIR__.'/auth.php';
 
 
 // ==========================================
-// 3. ADMIN & STAFF DASHBOARD (Protected)
+// 3. PROFILE ROUTES (For All Authenticated Users)
 // ==========================================
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+
+// ==========================================
+// 4. ADMIN & STAFF DASHBOARD (Protected - Admin/Staff Only)
+// ==========================================
+Route::middleware(['auth', 'verified', 'admin.staff'])->group(function () {
 
     // ----------------------------------------------------------------
     // DASHBOARD ROUTES
@@ -65,12 +75,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/realtime', [DashboardController::class, 'realTimeData'])->name('dashboard.realtime');
     Route::get('/dashboard/notifications', [DashboardController::class, 'notifications'])->name('dashboard.notifications');
-    
-    // --- PROFILE SETTINGS (For Everyone) ---
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
 
     // --- ADMIN MODULES ---
     Route::get('/pos', [PosController::class, 'index'])->name('pos');
@@ -94,5 +98,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/settings', [\App\Http\Controllers\SettingsController::class, 'update'])->name('settings.update');
     Route::post('/settings/clear-cache', [\App\Http\Controllers\SettingsController::class, 'clearCache'])->name('settings.clear-cache');
     Route::post('/settings/backup', [\App\Http\Controllers\SettingsController::class, 'createBackup'])->name('settings.backup');
+    Route::post('/settings/test-telegram', [\App\Http\Controllers\SettingsController::class, 'testTelegram'])->name('settings.test-telegram');
 
 });

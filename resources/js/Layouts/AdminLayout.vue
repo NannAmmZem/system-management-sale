@@ -17,21 +17,36 @@ const user = computed(() => {
     };
 });
 
-// Menu Items
-const items = [
-  { title: 'Dashboard', icon: 'mdi-view-dashboard', route: 'dashboard' },
-  { title: 'POS System', icon: 'mdi-monitor-dashboard', route: 'pos' },
-  { title: 'Products', icon: 'mdi-package-variant', route: 'products.index' },
-  { title: 'Categories', icon: 'mdi-shape', route: 'categories.index' },
-  { title: 'Employees', icon: 'mdi-account-group', route: 'employees.index' },
-  { title: 'Members', icon: 'mdi-account-star', route: 'customers.index' },
-  { title: 'Suppliers', icon: 'mdi-truck', route: 'suppliers.index' },
-  { title: 'Promotions', icon: 'mdi-ticket-percent', route: 'promotions.index' },
-  { title: 'Sales Report', icon: 'mdi-chart-bar', route: 'reports.index' },
-  { title: 'Attendance', icon: 'mdi-clock-check', route: 'attendance.index' },
-  { title: 'Positions', icon: 'mdi-shield-account', route: 'roles.index' },
-  { title: 'Settings', icon: 'mdi-cog', route: 'settings.index' },
+// Get user permissions
+const userPermissions = computed(() => {
+    return page.props.auth?.user?.permissions || [];
+});
+
+// Check if user has permission
+const hasPermission = (permission) => {
+    return userPermissions.value.includes(permission);
+};
+
+// Menu Items with permission requirements
+const allMenuItems = [
+  { title: 'Dashboard', icon: 'mdi-view-dashboard', route: 'dashboard', permission: 'view dashboard' },
+  { title: 'POS System', icon: 'mdi-monitor-dashboard', route: 'pos', permission: 'access pos' },
+  { title: 'Products', icon: 'mdi-package-variant', route: 'products.index', permission: 'view products' },
+  { title: 'Categories', icon: 'mdi-shape', route: 'categories.index', permission: 'view categories' },
+  { title: 'Employees', icon: 'mdi-account-group', route: 'employees.index', permission: 'view employees' },
+  { title: 'Members', icon: 'mdi-account-star', route: 'customers.index', permission: 'view customers' },
+  { title: 'Suppliers', icon: 'mdi-truck', route: 'suppliers.index', permission: 'view suppliers' },
+  { title: 'Promotions', icon: 'mdi-ticket-percent', route: 'promotions.index', permission: 'view promotions' },
+  { title: 'Sales Report', icon: 'mdi-chart-bar', route: 'reports.index', permission: 'view reports' },
+  { title: 'Attendance', icon: 'mdi-clock-check', route: 'attendance.index', permission: 'view attendance' },
+  { title: 'Positions', icon: 'mdi-shield-account', route: 'roles.index', permission: 'view roles' },
+  { title: 'Settings', icon: 'mdi-cog', route: 'settings.index', permission: 'view settings' },
 ];
+
+// Filter menu items based on user permissions
+const items = computed(() => {
+    return allMenuItems.filter(item => hasPermission(item.permission));
+});
 
 const navigateTo = (routeName) => {
     // Close drawer on mobile after navigation
@@ -72,7 +87,7 @@ const toggleDrawer = () => {
         :class="mobile ? 'py-3' : 'py-4'"
         :prepend-avatar="'https://ui-avatars.com/api/?name=' + (user?.name || 'Admin') + '&background=random'"
         :title="user?.name || 'User'"
-        :subtitle="user?.role ? user.role.toUpperCase() : 'STAFF'" 
+        :subtitle="user?.roles && user.roles.length > 0 ? user.roles[0].toUpperCase() : 'STAFF'" 
         nav
       >
         <template v-slot:append>

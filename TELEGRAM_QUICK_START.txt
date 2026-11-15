@@ -1,0 +1,133 @@
+═══════════════════════════════════════════════════════════════
+  TELEGRAM NOTIFICATIONS - QUICK START GUIDE
+═══════════════════════════════════════════════════════════════
+
+✅ WHAT'S BEEN SET UP:
+
+1. ✨ Instant Sale Notifications
+   - Notifies admin immediately when a customer buys something
+   - Shows order details, customer info, payment method, items
+
+2. 📊 Daily Summary at 9 PM
+   - Total sales & orders
+   - Payment method breakdown
+   - Top 5 selling products
+   - Low stock alerts
+   - Attendance summary
+
+═══════════════════════════════════════════════════════════════
+  SETUP STEPS (5 MINUTES)
+═══════════════════════════════════════════════════════════════
+
+STEP 1: Create Telegram Bot
+────────────────────────────
+1. Open Telegram, search: @BotFather
+2. Send: /newbot
+3. Name your bot: "Nann's Coffee Bot"
+4. Username: "nanns_coffee_bot" (must end with 'bot')
+5. SAVE THE TOKEN! (looks like: 123456789:ABCdefGHI...)
+
+STEP 2: Get Your Chat ID
+────────────────────────────
+1. Start chat with your bot (click link from BotFather)
+2. Send any message: "Hello"
+3. Open in browser (replace YOUR_TOKEN):
+   https://api.telegram.org/botYOUR_TOKEN/getUpdates
+4. Find "chat":{"id": and copy the number
+
+STEP 3: Update .env File
+────────────────────────────
+Open: sms-app/.env
+Find these lines:
+   TELEGRAM_BOT_TOKEN=your_bot_token_here
+   TELEGRAM_ADMIN_CHAT_ID=your_chat_id_here
+
+Replace with YOUR values:
+   TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrsTUVwxyz
+   TELEGRAM_ADMIN_CHAT_ID=123456789
+
+Save the file!
+
+STEP 4: Test It!
+────────────────────────────
+Run in terminal:
+   cd sms-app
+   php artisan config:clear
+   php artisan telegram:daily-summary
+
+You should get a message in Telegram! 🎉
+
+STEP 5: Set Up Auto-Schedule (Windows)
+────────────────────────────────────────
+1. Open "Task Scheduler" (search in Windows)
+2. Click "Create Basic Task"
+3. Name: Laravel Scheduler
+4. Trigger: Daily, Any time
+5. Action: Start a program
+6. Program: C:\laragon\bin\php\php-8.3.x\php.exe
+7. Arguments: artisan schedule:run
+8. Start in: C:\laragon\www\Sale Management System\sms-app
+9. Finish!
+
+═══════════════════════════════════════════════════════════════
+  TESTING
+═══════════════════════════════════════════════════════════════
+
+Test Instant Notification:
+- Make a sale on the website or POS
+- Check Telegram for instant notification!
+
+Test Daily Summary:
+   php artisan telegram:daily-summary
+
+═══════════════════════════════════════════════════════════════
+  WHAT YOU'LL RECEIVE
+═══════════════════════════════════════════════════════════════
+
+📱 INSTANT SALE ALERT:
+   🛒 NEW SALE ALERT!
+   📋 Order: ORD-20260207-ABC123
+   👤 Customer: John Doe
+   💰 Total: $45.50
+   💳 Payment: Cash
+   📦 Items: 3
+   Items:
+   • Cappuccino x2 - $10.00
+   • Croissant x1 - $5.50
+
+📊 DAILY SUMMARY (9 PM):
+   💰 SALES REPORT
+   📈 Total Sales: $1,234.56
+   🛒 Total Orders: 45
+   📊 Avg Order: $27.43
+   
+   🏆 Top Products
+   🥇 Cappuccino: 35 sold
+   
+   ⚠️ LOW STOCK ALERTS
+   • Coffee Beans: 5 left
+   
+   👥 ATTENDANCE
+   ✅ Clocked In: 8
+   🔄 Still Working: 2
+
+═══════════════════════════════════════════════════════════════
+  TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════
+
+❌ Not receiving messages?
+   1. Check .env file has correct token and chat ID
+   2. Run: php artisan config:clear
+   3. Make sure you sent a message to your bot first
+   4. Check: storage/logs/laravel.log for errors
+
+❌ Daily summary not sending at 9 PM?
+   1. Make sure Task Scheduler is set up (Step 5)
+   2. Test manually: php artisan telegram:daily-summary
+   3. Check scheduler: php artisan schedule:list
+
+═══════════════════════════════════════════════════════════════
+
+Need help? Check TELEGRAM_SETUP.md for detailed instructions!
+
+═══════════════════════════════════════════════════════════════

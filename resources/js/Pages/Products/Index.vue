@@ -104,13 +104,38 @@ const submit = () => {
     console.log('Submitting form with image:', form.image);
 
     if (isEditing.value) {
-        // For editing, use PUT method
-        form.post(route('products.update', form.id), {
-            _method: 'PUT',
-            onSuccess: (response) => {
-                console.log('Update success:', response);
+        // For editing with file upload, use POST with _method field for Laravel method spoofing
+        // Create FormData manually to ensure _method is included
+        const formData = new FormData();
+        
+        // Add all form fields
+        formData.append('_method', 'PUT');
+        formData.append('name_en', form.name_en || '');
+        formData.append('name_kh', form.name_kh || '');
+        formData.append('barcode', form.barcode || '');
+        formData.append('category_id', form.category_id || '');
+        if (form.supplier_id) formData.append('supplier_id', form.supplier_id);
+        formData.append('cost_price', form.cost_price);
+        formData.append('sale_price', form.sale_price);
+        formData.append('qty', form.qty);
+        formData.append('alert_qty', form.alert_qty);
+        formData.append('description', form.description || '');
+        formData.append('status', form.status || 'active');
+        
+        // Add image if present
+        if (form.image && form.image instanceof File) {
+            formData.append('image', form.image);
+        }
+        
+        // Use router.post with FormData
+        router.post(route('products.update', form.id), formData, {
+            preserveScroll: true,
+            onSuccess: () => {
+                console.log('Update success');
                 dialog.value = false;
                 showSnackbar('Product updated successfully!', 'success');
+                form.reset();
+                previewImage.value = null;
             },
             onError: (errors) => {
                 console.error('Update errors:', errors);
@@ -120,10 +145,13 @@ const submit = () => {
     } else {
         // For creating, use POST method
         form.post(route('products.store'), {
+            preserveScroll: true,
             onSuccess: (response) => {
                 console.log('Create success:', response);
                 dialog.value = false;
                 showSnackbar('Product created successfully!', 'success');
+                form.reset();
+                previewImage.value = null;
             },
             onError: (errors) => {
                 console.error('Create errors:', errors);

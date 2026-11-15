@@ -9,6 +9,13 @@ class Customer extends Model
 {
     use HasFactory;
 
-    // ADD THIS LINE TO FIX THE ERROR:
-    protected $fillable = ['name', 'phone', 'address']; 
+    protected $fillable = ['user_id', 'name', 'email', 'phone', 'address'];
+    
+    /**
+     * Get the user that owns the customer.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

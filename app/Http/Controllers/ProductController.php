@@ -19,21 +19,30 @@ class ProductController extends Controller
             'products' => Product::with(['category', 'supplier'])->latest()->get(),
             'categories' => Category::all(),
             'suppliers' => Supplier::all(),
+            'can' => [
+                'create' => auth()->user()->can('create products'),
+                'edit' => auth()->user()->can('edit products'),
+                'delete' => auth()->user()->can('delete products'),
+            ],
         ]);
     }
 
-    public function show(Product $product)
+    public function show($id)
     {
+        // Find product or fail with 404
+        $product = Product::with(['category', 'supplier'])->findOrFail($id);
+        
         // Get related products from the same category
         $relatedProducts = Product::with('category')
             ->where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
+            ->where('status', 'active')
             ->where('qty', '>', 0)
             ->take(4)
             ->get();
 
         return Inertia::render('Products/Show', [
-            'product' => $product->load(['category', 'supplier']),
+            'product' => $product,
             'relatedProducts' => $relatedProducts,
             'canLogin' => Route::has('login'),
             'canRegister' => Route::has('register'),

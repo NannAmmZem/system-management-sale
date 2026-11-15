@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sms-app
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./:/var/www
+      - ./database/database.sqlite:/var/www/database/database.sqlite
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - APP_URL=http://192.168.233.100
+      - DB_CONNECTION=sqlite
+      - DB_DATABASE=/var/www/database/database.sqlite
+    networks:
+      - sms-network
+
+networks:
+  sms-network:
+    driver: bridge

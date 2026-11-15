@@ -262,7 +262,7 @@
             v-for="relatedProduct in relatedProducts"
             :key="relatedProduct.id"
             class="bg-white/5 rounded-xl overflow-hidden backdrop-blur-lg border border-white/10 hover:border-primary/50 transition-all duration-300 hover:transform hover:scale-105 cursor-pointer"
-            @click="$inertia.visit(`/products/${relatedProduct.id}`)"
+            @click="$inertia.visit(`/product/${relatedProduct.id}`)"
           >
             <div class="aspect-square overflow-hidden">
               <img
@@ -392,7 +392,12 @@ const showNotification = (message, color = 'success') => {
 };
 
 const handleImageError = (event) => {
-  event.target.src = '/images/no-image.png';
+  console.log('Image failed to load:', event.target.src);
+  event.target.src = '/images/no-image.svg';
+  // If svg also fails, use a data URL placeholder
+  event.target.onerror = function() {
+    this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="400"%3E%3Crect fill="%23ddd" width="400" height="400"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" text-anchor="middle" dy=".3em" font-family="sans-serif" font-size="18"%3ENo Image%3C/text%3E%3C/svg%3E';
+  };
 };
 </script>
 

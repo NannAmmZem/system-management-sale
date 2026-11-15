@@ -35,6 +35,35 @@
 
     <!-- Progress Steps -->
     <div class="progress-container">
+      <!-- Session Warning -->
+      <v-alert
+        v-if="showSessionWarning"
+        type="warning"
+        variant="tonal"
+        closable
+        class="mb-4 mx-auto"
+        style="max-width: 1200px;"
+        @click:close="showSessionWarning = false"
+      >
+        <div class="d-flex align-center">
+          <v-icon class="mr-2">mdi-clock-alert</v-icon>
+          <div class="flex-grow-1">
+            <strong>Session Warning:</strong> This page has been open for a while. 
+            If you experience issues, please refresh the page before placing your order.
+          </div>
+          <v-btn
+            color="warning"
+            variant="outlined"
+            size="small"
+            @click="refreshPage"
+            class="ml-4"
+          >
+            <v-icon start size="small">mdi-refresh</v-icon>
+            Refresh Now
+          </v-btn>
+        </div>
+      </v-alert>
+      
       <div class="progress-steps">
         <div class="step active">
           <div class="step-circle">
@@ -444,13 +473,27 @@
     <v-snackbar
       v-model="showSnackbar"
       :color="snackbarColor"
-      timeout="5000"
-      location="top right"
+      :timeout="snackbarColor === 'error' ? 10000 : 5000"
+      location="top"
       class="custom-snackbar"
+      multi-line
     >
       <div class="snackbar-content">
         <v-icon class="mr-2">{{ snackbarIcon }}</v-icon>
-        {{ snackbarMessage }}
+        <div>
+          <div>{{ snackbarMessage }}</div>
+          <v-btn
+            v-if="snackbarColor === 'error' && snackbarMessage.includes('Session expired')"
+            color="white"
+            variant="outlined"
+            size="small"
+            class="mt-2"
+            @click="refreshPage"
+          >
+            <v-icon start size="small">mdi-refresh</v-icon>
+            Refresh Page Now
+          </v-btn>
+        </div>
       </div>
       <template #actions>
         <v-btn icon="mdi-close" variant="text" @click="showSnackbar = false" />
@@ -466,6 +509,10 @@ import { useProductStore } from '@/Stores/productStore';
 
 const store = useProductStore();
 const page = usePage();
+
+// Track page load time to warn about session expiration
+const pageLoadTime = ref(Date.now());
+const showSessionWarning = ref(false);
 
 // Check for flash data on mount
 onMounted(() => {
@@ -484,6 +531,14 @@ onMounted(() => {
       showSuccessDialog.value = true;
       showNotification('Order placed successfully! 🎉', 'success', 'mdi-check-circle');
     }
+    
+    // Check session age every 30 seconds
+    setInterval(() => {
+      const minutesOpen = Math.floor((Date.now() - pageLoadTime.value) / 60000);
+      if (minutesOpen >= 30) {
+        showSessionWarning.value = true;
+      }
+    }, 30000);
   } catch (error) {
     console.error('Error in onMounted:', error);
   }
@@ -657,6 +712,8 @@ const processCheckout = async () => {
   try {
     // Use Inertia for form submission with better error handling
     router.post('/checkout/process', orderData, {
+      preserveState: true,
+      preserveScroll: true,
       onSuccess: (page) => {
         console.log('Checkout success response:', page);
         console.log('Page props:', page.props);
@@ -704,6 +761,16 @@ const processCheckout = async () => {
       onError: (errors) => {
         console.error('Checkout error:', errors);
         
+        // Check if it's a CSRF token error (419) - reload immediately
+        if (errors && (errors.message && errors.message.includes('419') || errors['419'])) {
+          showNotification('Session expired. Refreshing page...', 'warning', 'mdi-refresh');
+          // Reload page immediately to get fresh CSRF token
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+          return;
+        }
+        
         // Handle validation errors
         if (typeof errors === 'object' && errors !== null) {
           const errorMessages = Object.values(errors).flat();
@@ -724,7 +791,16 @@ const processCheckout = async () => {
     });
   } catch (error) {
     console.error('Checkout error:', error);
-    showNotification('An error occurred during checkout. Please try again.', 'error', 'mdi-alert-circle');
+    
+    // Check if it's a network error with 419 status
+    if (error.response && error.response.status === 419) {
+      showNotification('Session expired. Refreshing page...', 'error', 'mdi-alert-circle');
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    } else {
+      showNotification('An error occurred during checkout. Please try again.', 'error', 'mdi-alert-circle');
+    }
     processing.value = false;
   }
 };
@@ -772,6 +848,11 @@ const fillTestData = () => {
     notes: 'Please deliver during business hours'
   };
   showNotification('Test data filled in!', 'info', 'mdi-information');
+};
+
+// Refresh page function
+const refreshPage = () => {
+  window.location.reload();
 };
 </script>
 

@@ -101,6 +101,10 @@ class CheckoutController extends Controller
             try {
                 $this->sendCustomerEmail($sale, $receiptPath, $invoicePath);
                 $this->sendAdminNotification($sale);
+                
+                // Send Telegram notification
+                $telegramService = new \App\Services\TelegramNotificationService();
+                $telegramService->notifyNewSale($sale);
             } catch (\Exception $e) {
                 \Log::error('Failed to send notifications: ' . $e->getMessage());
             }

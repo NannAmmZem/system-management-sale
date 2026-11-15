@@ -73,6 +73,7 @@
                     color="amber"
                     bg-color="rgba(255,255,255,0.1)"
                     class="glass-input"
+                    :error-messages="form.errors.company_name"
                   ></v-text-field>
                 </v-col>
                 
@@ -86,6 +87,7 @@
                     color="amber"
                     bg-color="rgba(255,255,255,0.1)"
                     class="glass-input"
+                    :error-messages="form.errors.company_email"
                   ></v-text-field>
                 </v-col>
                 
@@ -98,6 +100,7 @@
                     color="amber"
                     bg-color="rgba(255,255,255,0.1)"
                     class="glass-input"
+                    :error-messages="form.errors.company_phone"
                   ></v-text-field>
                 </v-col>
                 
@@ -111,6 +114,7 @@
                     color="amber"
                     bg-color="rgba(255,255,255,0.1)"
                     class="glass-input"
+                    :error-messages="form.errors.currency"
                   ></v-select>
                 </v-col>
               </v-row>
@@ -232,7 +236,8 @@
               <div class="d-flex justify-end">
                 <v-btn
                   type="submit"
-                  :loading="saving"
+                  :loading="form.processing"
+                  :disabled="form.processing"
                   color="amber"
                   :size="$vuetify.display.mobile ? 'default' : 'large'"
                   prepend-icon="mdi-content-save"
@@ -394,8 +399,8 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { router } from '@inertiajs/vue3'
+import { ref, reactive, watch } from 'vue'
+import { router, useForm, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 
 // Props
@@ -405,8 +410,11 @@ const props = defineProps({
   backups: Array
 })
 
-// Reactive form data
-const form = reactive({
+// Get page props for flash messages
+const page = usePage()
+
+// Reactive form data using Inertia form helper
+const form = useForm({
   company_name: props.settings.company_name,
   company_email: props.settings.company_email,
   company_phone: props.settings.company_phone,
@@ -422,7 +430,6 @@ const form = reactive({
 })
 
 // Loading states
-const saving = ref(false)
 const clearingCache = ref(false)
 const creatingBackup = ref(false)
 const optimizing = ref(false)
@@ -433,6 +440,16 @@ const snackbar = reactive({
   message: '',
   color: 'success'
 })
+
+// Watch for flash messages
+watch(() => page.props.flash, (flash) => {
+  if (flash?.success) {
+    showSnackbar(flash.success, 'success')
+  }
+  if (flash?.error) {
+    showSnackbar(flash.error, 'error')
+  }
+}, { deep: true })
 
 // Options
 const currencies = [
@@ -452,85 +469,42 @@ const timezones = [
 ]
 
 // Methods
-const updateSettings = async () => {
-  saving.value = true
-  
-  try {
-    const response = await fetch(route('settings.update'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-      },
-      body: JSON.stringify(form)
-    })
-    
-    const data = await response.json()
-    
-    if (data.success) {
-      showSnackbar(data.message, 'success')
-    } else {
-      showSnackbar('Failed to update settings', 'error')
+const updateSettings = () => {
+  form.post(route('settings.update'), {
+    preserveScroll: true,
+    onError: (errors) => {
+      console.error('Validation errors:', errors)
+      showSnackbar('Please check the form for errors', 'error')
     }
-  } catch (error) {
-    showSnackbar('An error occurred while saving settings', 'error')
-  } finally {
-    saving.value = false
-  }
+  })
 }
 
-const clearCache = async () => {
+const clearCache = () => {
   clearingCache.value = true
   
-  try {
-    const response = await fetch(route('settings.clear-cache'), {
-      method: 'POST',
-      headers: {
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-      }
-    })
-    
-    const data = await response.json()
-    
-    if (data.success) {
-      showSnackbar(data.message, 'success')
-    } else {
-      showSnackbar('Failed to clear cache', 'error')
+  router.post(route('settings.clear-cache'), {}, {
+    preserveScroll: true,
+    onFinish: () => {
+      clearingCache.value = false
     }
-  } catch (error) {
-    showSnackbar('An error occurred while clearing cache', 'error')
-  } finally {
-    clearingCache.value = false
-  }
+  })
 }
 
-const createBackup = async () => {
+const createBackup = () => {
   creatingBackup.value = true
   
-  try {
-    const response = await fetch(route('settings.backup'), {
-      method: 'POST',
-      headers: {
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-      }
-    })
-    
-    const data = await response.json()
-    
-    if (data.success) {
-      showSnackbar(data.message, 'success')
-      // Refresh the page to show new backup
+  router.post(route('settings.backup'), {}, {
+    preserveScroll: true,
+    onFinish: () => {
+      creatingBackup.value = false
+    },
+    onSuccess: () => {
+      // Reload to show new backup
       setTimeout(() => {
-        router.reload()
+        router.reload({ only: ['backups'] })
       }, 1000)
-    } else {
-      showSnackbar('Failed to create backup', 'error')
     }
-  } catch (error) {
-    showSnackbar('An error occurred while creating backup', 'error')
-  } finally {
-    creatingBackup.value = false
-  }
+  })
 }
 
 const optimizeSystem = async () => {

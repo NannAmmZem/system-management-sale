@@ -1,3 +1,14 @@
+#### Roles Admin and staff ####
+admin@gmail.com
+password
+============
+staff@gmail.com
+password
+============
+##### if normal user or customer can register
+
+
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">

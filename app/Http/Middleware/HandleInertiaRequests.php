@@ -29,14 +29,26 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
 {
+    $user = $request->user();
+    
     return array_merge(parent::share($request), [
         'auth' => [
-            'user' => $request->user(),
+            'user' => $user ? [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'roles' => $user->getRoleNames(), // Get role names
+                'permissions' => $user->getAllPermissions()->pluck('name'), // Get all permissions
+            ] : null,
             // Send 'can' array to Vue
-            'can' => $request->user() ? [
-                'manage_stock' => $request->user()->can('manage stock'),
-                'manage_employees' => $request->user()->can('manage employees'),
+            'can' => $user ? [
+                'manage_stock' => $user->can('manage stock'),
+                'manage_employees' => $user->can('manage employees'),
             ] : [],
+        ],
+        'flash' => [
+            'success' => fn () => $request->session()->get('success'),
+            'error' => fn () => $request->session()->get('error'),
         ],
     ]);
 }

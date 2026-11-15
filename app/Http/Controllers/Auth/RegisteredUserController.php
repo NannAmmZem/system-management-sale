@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Customer;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -42,12 +43,20 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        // Automatically create a customer record for the new user
+        Customer::create([
+            'user_id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => null, // Can be updated later in profile
+            'address' => null, // Can be updated later in profile
+        ]);
+
         event(new Registered($user));
 
         Auth::login($user);
 
-        // Default new users to 'user' role if you haven't set it in the create() method
-    // Then redirect to Home
-    return redirect(route('home', absolute: false));
+        // Redirect to home
+        return redirect(route('home', absolute: false));
     }
 }
